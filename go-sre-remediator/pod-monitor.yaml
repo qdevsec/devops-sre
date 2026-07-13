@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: auto-remediator-monitor
+  namespace: default
+  labels:
+    release: promo-stack # Connects this monitor directly to your Helm installation
+spec:
+  selector:
+    matchLabels:
+      app: auto-remediator # Matches the label in your Deployment spec template
+  podMetricsEndpoints:
+  - port: http # Matches the name assigned to containerPort 8080 in your manifest
+    path: /metrics
+    interval: 15s

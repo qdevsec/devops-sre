@@ -1,0 +1,11 @@
+rules:
+  - alert_name: "DiskRunningFull"
+    script: "./remediate_disk.sh"
+    verify_cmd: "df /"
+    timeout_seconds: 3
+    cooldown_minutes: 2
+  - alert_name: "ServiceDown"
+    script: "./remediate_service.sh"
+    verify_cmd: "echo 'healthy'"
+    timeout_seconds: 10
+    cooldown_minutes: 5

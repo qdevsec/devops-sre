@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: remediator-config
+data:
+  config.yaml: |
+    rules:
+      - alert_name: "DiskRunningFull"
+        script: "./remediate_disk.sh"
+        verify_cmd: "df /"
+        timeout_seconds: 3
+        cooldown_minutes: 2
+      - alert_name: "ServiceDown"
+        script: "./remediate_service.sh"
+        verify_cmd: "echo 'healthy'"
+        timeout_seconds: 10
+        cooldown_minutes: 5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sre-auto-remediator
+  labels:
+    app: auto-remediator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auto-remediator
+  template:
+    metadata:
+      labels:
+        app: auto-remediator
+    spec:
+      containers:
+        - name: remediator
+          image: go-sre-remediator:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          # ---- ADD THIS ENV BLOCK HERE ----
+          env:
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: remediator-secrets
+                  key: slack-webhook-url
+          # ---------------------------------
+          resources:
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: config-volume
+          configMap:
+            name: remediator-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auto-remediator-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: auto-remediator

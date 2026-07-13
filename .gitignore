@@ -1,5 +1,8 @@
 # Ignore
 
-# ~700mb file .terraform/providers/registry.terraform.io/hashcorp/aws/5.100.0/linux_amd64/terraform-provider-aws_v5.100.0_x5 
+# github 100mb push limit
+# .terraform/ is local and should not be pushed
+# ~700mb file, terraform creates executable compiled binary for aws
+#.terraform/providers/registry.terraform.io/hashcorp/aws/5.100.0/linux_amd64/terraform-provider-aws_v5.100.0_x5 
 
 /devops-sre/iac-terraform-vs-cloudformation/terraform/.terraform/

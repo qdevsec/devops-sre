@@ -23,4 +23,4 @@ persistence:
 # Setup an initial admin password (required)
 extraEnvs:
   - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-    value: "T7!LemonRiver#82"
+    value: <password> 

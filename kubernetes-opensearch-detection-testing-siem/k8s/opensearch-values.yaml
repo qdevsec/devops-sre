@@ -1,0 +1,26 @@
+# k8s/opensearch-values.yaml
+
+# Run as a single node for testing
+singleNode: true
+
+# Define the cluster name
+clusterName: "opensearch-lab"
+
+# Reduce resource requirements so it doesn't crash a local k8s cluster
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "2"
+    memory: "2Gi"
+
+# Disable persistent storage for temporary lab testing (Warning: data will be lost on pod restart)
+# If you want persistence, change this to true and define a storageClass
+persistence:
+  enabled: false
+
+# Setup an initial admin password (required)
+extraEnvs:
+  - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+    value: "T7!LemonRiver#82"

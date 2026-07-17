@@ -1,0 +1,23 @@
+title: System Information Discovery Detection
+id: a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d
+status: experimental
+description: Detects standard system reconnaissance commands on Linux hosts.
+author: Detection Engineering Lab
+date: 2026/07/17
+logsource:
+    product: linux
+    service: auditd
+detection:
+    selection:
+        # Match keys produced by the auditd EXECVE rule we setup
+        key: 'command_execution'
+        type: 'EXECVE'
+    target_commands:
+        # Commands mapped in raw auditd logs to executable arguments (e.g., a0, a1, comm)
+        a0|contains:
+            - 'whoami'
+            - 'uname'
+    condition: selection and target_commands
+falsepositives:
+    - Administrative system profiling scripts
+level: medium

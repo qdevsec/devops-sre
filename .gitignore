@@ -6,3 +6,4 @@
 #.terraform/providers/registry.terraform.io/hashcorp/aws/5.100.0/linux_amd64/terraform-provider-aws_v5.100.0_x5 
 
 /devops-sre/iac-terraform-vs-cloudformation/terraform/.terraform/
+/devops-sre/.venv/

@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: HA Logviewer EKS Deployment
+
+Resources:
+  LogviewerNamespace:
+    Type: AWS::EKS::Namespace
+    Properties:
+      Name: web-ha
+
+  LogviewerConfigMap:
+    Type: AWS::EKS::ConfigMap
+    Properties:
+      Namespace: web-ha
+      Name: config-logviewer-html
+      Data:
+        index.html: |
+          <!DOCTYPE html>
+          <html>...</html>
+        cloud.json: |
+          { "status": "placeholder", "events": [] }
+        sysmon.json: |
+          { "status": "placeholder", "events": [] }
+
+  LogviewerDeployment:
+    Type: AWS::EKS::Deployment
+    Properties:
+      Namespace: web-ha
+      Metadata:
+        Name: ha-logviewer
+        Labels:
+          app: ha-logviewer
+      Spec:
+        Replicas: 1
+        Selector:
+          MatchLabels:
+            app: ha-logviewer
+        Template:
+          Metadata:
+            Labels:
+              app: ha-logviewer
+          Spec:
+            Containers:
+              - Name: logviewer
+                Image: logviewer:latest
+                Ports:
+                  - ContainerPort: 8080
+                VolumeMounts:
+                  - Name: logviewer-html
+                    MountPath: /placeholders
+            Volumes:
+              - Name: logviewer-html
+                ConfigMap:
+                  Name: config-logviewer-html
+
+  LogviewerService:
+    Type: AWS::EKS::Service
+    Properties:
+      Namespace: web-ha
+      Metadata:
+        Name: ha-logviewer-service
+      Spec:
+        Selector:
+          app: ha-logviewer
+        Ports:
+          - Port: 8080
+            TargetPort: 8080
+            NodePort: 30080
+        Type: NodePort

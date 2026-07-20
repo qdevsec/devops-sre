@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ha-logviewer-svc
+  namespace: web-ha
+spec:
+  selector:
+    app: ha-logviewer
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+    nodePort: 30080
+        # make site externally available via node IP [NodePort]
+    # [ClusterIP] - available inside cluster only
+    # [ExternalName] - Inside cluster to outside
+    # [LoadBalancer] - external via dedicate IP
+    # [Headless] - inside cluster only
+  type: NodePort

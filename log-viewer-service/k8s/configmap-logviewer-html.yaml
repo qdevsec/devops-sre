@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-logviewer-html
+  namespace: web-ha
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>HA Log Viewer</title>
+      <style>
+        body { font-family: Arial, sans-serif; }
+        .tabs { display: flex; margin-bottom: 1em; }
+        .tab { padding: 10px; cursor: pointer; border: 1px solid #ccc; }
+        .tab.active { background: #eee; }
+        .content { border: 1px solid #ccc; padding: 10px; }
+      </style>
+    </head>
+    <body>
+      <h1>HA Log Viewer</h1>
+      <div class="tabs">
+        <div class="tab active" onclick="showLogs('auditd')">Auditd</div>
+        <div class="tab" onclick="showLogs('syslog')">Syslog</div>
+        <div class="tab" onclick="showLogs('sysmon')">Sysmon</div>
+        <div class="tab" onclick="showLogs('cloud')">Cloud</div>
+        <div class="tab" onclick="showLogs('k8s')">Kubernetes Metrics</div>
+        <div class="tab" onclick="showLogs('app')">App Metrics</div>
+      </div>
+      <div class="content" id="logContent">Select a source...</div>
+
+      <script>
+        async function showLogs(source) {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          event.target.classList.add('active');
+
+          const url = source === 'k8s' ? '/metrics/k8s'
+                    : source === 'app' ? '/metrics/app'
+                    : '/logs/' + source;
+
+          const res = await fetch(url);
+          let content = "";
+
+          if (source === 'auditd' || source === 'syslog' || source === 'sysmon' || source === 'cloud') {
+            const data = await res.json();
+            if (data.events && data.events.length > 0) {
+              content = "<ul>" + data.events.map(e => `<li>${e}</li>`).join("") + "</ul>";
+            } else {
+              content = "No events yet.";
+            }
+          } else {
+            // metrics endpoints return plain text
+            content = await res.text();
+          }
+
+          document.getElementById('logContent').innerHTML = content;
+        }
+      </script>
+
+    </body>
+    </html>
+
+  sysmon.json: |
+    { "status": "placeholder", "message": "Sysmon logs not yet integrated", "events": [] }
+
+  cloud.json: |
+    { "status": "placeholder", "message": "Cloud logs not yet integrated", "events": [] }

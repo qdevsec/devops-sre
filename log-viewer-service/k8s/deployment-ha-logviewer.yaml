@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ha-logviewer
+  namespace: web-ha
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ha-logviewer
+  template:
+    metadata:
+      labels:
+        app: ha-logviewer
+    spec:
+      volumes:
+      - name: syslog-logs
+        hostPath:
+          path: /var/log
+          type: Directory
+      - name: auditd-logs
+        hostPath:
+          path: /var/log/audit
+          type: DirectoryOrCreate
+      - name: logviewer-html
+        configMap:
+          name: config-logviewer-html
+      containers:
+      - name: logviewer
+        image: logviewer:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        volumeMounts:
+        - name: logviewer-html
+          mountPath: /placeholders
+
+      - name: auditd-sidecar
+        image: curlimages/curl:latest
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - name: auditd-logs
+          mountPath: /var/log/audit
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          tail -F /var/log/audit/audit.log | while read line; do
+            echo "Sending audit: $line"
+            echo "$line" | \
+            curl -s -X POST http://localhost:8080/logs/auditd \
+              -H "Content-Type: text/plain" \
+              --data-binary @-
+          done
+
+      - name: syslog-sidecar
+        image: curlimages/curl:latest
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - name: syslog-logs
+          mountPath: /var/log
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          tail -F /var/log/syslog | while read line; do
+            echo "Sending syslog: $line"
+            echo "$line" | \
+            curl -s -X POST http://localhost:8080/logs/syslog \
+              -H "Content-Type: text/plain" \
+              --data-binary @-
+          done
